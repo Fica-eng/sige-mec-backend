@@ -1,0 +1,33 @@
+CREATE TYPE "TipoEscola" AS ENUM ('PRIMARIA', 'BASICA', 'SECUNDARIA');
+CREATE TYPE "NivelEnsino" AS ENUM ('EP1', 'EP2', 'ESG1', 'ESG2');
+CREATE TYPE "Genero" AS ENUM ('M', 'F');
+CREATE TYPE "StatusAluno" AS ENUM ('ATIVO', 'INATIVO', 'TRANSFERIDO', 'EVADIDO', 'CONCLUIDO');
+CREATE TYPE "NivelHabilitacao" AS ENUM ('MEDIO', 'BACHAREL', 'LICENCIATURA', 'MESTRADO', 'DOUTORAMENTO');
+CREATE TYPE "RoleUtilizador" AS ENUM ('ADMIN_MEC', 'COORDENADOR_REGIONAL', 'DIRETOR_ESCOLA', 'PROFESSOR');
+CREATE TYPE "StatusMatricula" AS ENUM ('ATIVA', 'CANCELADA', 'TRANSFERIDA');
+
+CREATE TABLE "provincias" ("id" SERIAL PRIMARY KEY, "nome" VARCHAR(100) UNIQUE NOT NULL, "codigo" VARCHAR(5) UNIQUE NOT NULL, "createdAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "distritos" ("id" SERIAL PRIMARY KEY, "nome" VARCHAR(100) NOT NULL, "provinciaId" INTEGER NOT NULL REFERENCES "provincias"("id"), "createdAt" TIMESTAMPTZ DEFAULT NOW(), UNIQUE("nome","provinciaId"));
+CREATE TABLE "escolas" ("id" SERIAL PRIMARY KEY, "codigo" VARCHAR(20) UNIQUE NOT NULL, "nome" VARCHAR(200) NOT NULL, "tipo" "TipoEscola" NOT NULL, "provinciaId" INTEGER NOT NULL REFERENCES "provincias"("id"), "distritoId" INTEGER NOT NULL REFERENCES "distritos"("id"), "localidade" VARCHAR(200), "endereco" VARCHAR(300), "telefone" VARCHAR(20), "email" VARCHAR(100), "latitude" FLOAT, "longitude" FLOAT, "ativa" BOOLEAN DEFAULT TRUE, "createdAt" TIMESTAMPTZ DEFAULT NOW(), "updatedAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "alunos" ("id" SERIAL PRIMARY KEY, "numeroBI" VARCHAR(20) UNIQUE, "nome" VARCHAR(100) NOT NULL, "apelido" VARCHAR(100) NOT NULL, "dataNascimento" DATE NOT NULL, "genero" "Genero" NOT NULL, "escolaId" INTEGER NOT NULL REFERENCES "escolas"("id"), "status" "StatusAluno" DEFAULT 'ATIVO', "createdAt" TIMESTAMPTZ DEFAULT NOW(), "updatedAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "professores" ("id" SERIAL PRIMARY KEY, "numeroFuncionario" VARCHAR(20) UNIQUE NOT NULL, "nome" VARCHAR(100) NOT NULL, "apelido" VARCHAR(100) NOT NULL, "genero" "Genero" NOT NULL, "dataNascimento" DATE NOT NULL, "habilitacao" "NivelHabilitacao" NOT NULL, "email" VARCHAR(100) UNIQUE, "telefone" VARCHAR(20), "ativo" BOOLEAN DEFAULT TRUE, "createdAt" TIMESTAMPTZ DEFAULT NOW(), "updatedAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "professor_escola" ("id" SERIAL PRIMARY KEY, "professorId" INTEGER NOT NULL REFERENCES "professores"("id"), "escolaId" INTEGER NOT NULL REFERENCES "escolas"("id"), "anoLetivo" INTEGER NOT NULL, "ativo" BOOLEAN DEFAULT TRUE, "createdAt" TIMESTAMPTZ DEFAULT NOW(), UNIQUE("professorId","escolaId","anoLetivo"));
+CREATE TABLE "disciplinas" ("id" SERIAL PRIMARY KEY, "nome" VARCHAR(100) UNIQUE NOT NULL, "codigo" VARCHAR(10) UNIQUE NOT NULL, "nivel" "NivelEnsino" NOT NULL);
+CREATE TABLE "professor_disciplina" ("id" SERIAL PRIMARY KEY, "professorId" INTEGER NOT NULL REFERENCES "professores"("id"), "disciplinaId" INTEGER NOT NULL REFERENCES "disciplinas"("id"), UNIQUE("professorId","disciplinaId"));
+CREATE TABLE "turmas" ("id" SERIAL PRIMARY KEY, "nome" VARCHAR(20) NOT NULL, "classe" INTEGER NOT NULL, "turno" VARCHAR(20) NOT NULL, "anoLetivo" INTEGER NOT NULL, "escolaId" INTEGER NOT NULL REFERENCES "escolas"("id"), "professorId" INTEGER REFERENCES "professores"("id"), "capacidade" INTEGER DEFAULT 40, "createdAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "turma_disciplina" ("id" SERIAL PRIMARY KEY, "turmaId" INTEGER NOT NULL REFERENCES "turmas"("id"), "disciplinaId" INTEGER NOT NULL REFERENCES "disciplinas"("id"), UNIQUE("turmaId","disciplinaId"));
+CREATE TABLE "matriculas" ("id" SERIAL PRIMARY KEY, "alunoId" INTEGER NOT NULL REFERENCES "alunos"("id"), "turmaId" INTEGER NOT NULL REFERENCES "turmas"("id"), "anoLetivo" INTEGER NOT NULL, "dataMatricula" TIMESTAMPTZ DEFAULT NOW(), "status" "StatusMatricula" DEFAULT 'ATIVA', "createdAt" TIMESTAMPTZ DEFAULT NOW(), UNIQUE("alunoId","anoLetivo"));
+CREATE TABLE "notas" ("id" SERIAL PRIMARY KEY, "alunoId" INTEGER NOT NULL REFERENCES "alunos"("id"), "disciplinaId" INTEGER NOT NULL REFERENCES "disciplinas"("id"), "professorId" INTEGER NOT NULL REFERENCES "professores"("id"), "anoLetivo" INTEGER NOT NULL, "trimestre" INTEGER NOT NULL CHECK("trimestre" BETWEEN 1 AND 3), "valor" FLOAT NOT NULL CHECK("valor" BETWEEN 0 AND 20), "createdAt" TIMESTAMPTZ DEFAULT NOW(), "updatedAt" TIMESTAMPTZ DEFAULT NOW(), UNIQUE("alunoId","disciplinaId","anoLetivo","trimestre"));
+CREATE TABLE "frequencias" ("id" SERIAL PRIMARY KEY, "alunoId" INTEGER NOT NULL REFERENCES "alunos"("id"), "turmaId" INTEGER NOT NULL REFERENCES "turmas"("id"), "data" DATE NOT NULL, "presente" BOOLEAN DEFAULT TRUE, "justificada" BOOLEAN DEFAULT FALSE, "createdAt" TIMESTAMPTZ DEFAULT NOW(), UNIQUE("alunoId","turmaId","data"));
+CREATE TABLE "transferencias" ("id" SERIAL PRIMARY KEY, "alunoId" INTEGER NOT NULL REFERENCES "alunos"("id"), "escolaOrigemId" INTEGER NOT NULL REFERENCES "escolas"("id"), "escolaDestinoId" INTEGER NOT NULL REFERENCES "escolas"("id"), "data" TIMESTAMPTZ DEFAULT NOW(), "motivo" TEXT, "createdAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "utilizadores" ("id" SERIAL PRIMARY KEY, "email" VARCHAR(150) UNIQUE NOT NULL, "passwordHash" VARCHAR(255) NOT NULL, "role" "RoleUtilizador" NOT NULL, "nome" VARCHAR(150) NOT NULL, "ativo" BOOLEAN DEFAULT TRUE, "escolaId" INTEGER REFERENCES "escolas"("id"), "provinciaId" INTEGER REFERENCES "provincias"("id"), "professorId" INTEGER UNIQUE REFERENCES "professores"("id"), "ultimoLogin" TIMESTAMPTZ, "createdAt" TIMESTAMPTZ DEFAULT NOW(), "updatedAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "refresh_tokens" ("id" SERIAL PRIMARY KEY, "token" TEXT UNIQUE NOT NULL, "utilizadorId" INTEGER NOT NULL REFERENCES "utilizadores"("id") ON DELETE CASCADE, "expiresAt" TIMESTAMPTZ NOT NULL, "createdAt" TIMESTAMPTZ DEFAULT NOW());
+CREATE TABLE "auditoria" ("id" SERIAL PRIMARY KEY, "utilizadorId" INTEGER NOT NULL REFERENCES "utilizadores"("id"), "acao" VARCHAR(100) NOT NULL, "tabela" VARCHAR(100) NOT NULL, "registoId" INTEGER, "detalhes" JSONB, "ip" VARCHAR(50), "createdAt" TIMESTAMPTZ DEFAULT NOW());
+
+CREATE INDEX "idx_alunos_escola" ON "alunos"("escolaId");
+CREATE INDEX "idx_alunos_status" ON "alunos"("status");
+CREATE INDEX "idx_notas_aluno" ON "notas"("alunoId");
+CREATE INDEX "idx_notas_ano" ON "notas"("anoLetivo");
+CREATE INDEX "idx_matriculas_ano" ON "matriculas"("anoLetivo");
+CREATE INDEX "idx_escolas_tipo" ON "escolas"("tipo");
+CREATE INDEX "idx_escolas_prov" ON "escolas"("provinciaId");
