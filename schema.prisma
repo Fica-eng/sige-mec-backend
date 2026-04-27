@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoEscola {
+  PRIMARIA
+  BASICA
+  SECUNDARIA
+}
+
+enum NivelEnsino {
+  EP1
+  EP2
+  ESG1
+  ESG2
+}
+
+enum Genero {
+  M
+  F
+}
+
+enum StatusAluno {
+  ATIVO
+  INATIVO
+  TRANSFERIDO
+  EVADIDO
+  CONCLUIDO
+}
+
+enum NivelHabilitacao {
+  MEDIO
+  BACHAREL
+  LICENCIATURA
+  MESTRADO
+  DOUTORAMENTO
+}
+
+enum RoleUtilizador {
+  ADMIN_MEC
+  COORDENADOR_REGIONAL
+  DIRETOR_ESCOLA
+  PROFESSOR
+}
+
+enum StatusMatricula {
+  ATIVA
+  CANCELADA
+  TRANSFERIDA
+}
+
+model Provincia {
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  codigo    String   @unique @db.VarChar(5)
+  createdAt DateTime @default(now())
+
+  distritos    Distrito[]
+  escolas      Escola[]
+  utilizadores Utilizador[]
+
+  @@map("provincias")
+}
+
+model Distrito {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  provinciaId Int
+  createdAt   DateTime @default(now())
+
+  provincia Provincia @relation(fields: [provinciaId], references: [id])
+  escolas   Escola[]
+
+  @@unique([nome, provinciaId])
+  @@map("distritos")
+}
+
+model Escola {
+  id          Int        @id @default(autoincrement())
+  codigo      String     @unique @db.VarChar(20)
+  nome        String
+  tipo        TipoEscola
+  provinciaId Int
+  distritoId  Int
+  localidade  String?
+  endereco    String?
+  telefone    String?
+  email       String?
+  latitude    Float?
+  longitude   Float?
+  ativa       Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  provincia    Provincia         @relation(fields: [provinciaId], references: [id])
+  distrito     Distrito          @relation(fields: [distritoId], references: [id])
+  alunos       Aluno[]
+  professores  ProfessorEscola[]
+  turmas       Turma[]
+  utilizadores Utilizador[]
+
+  @@map("escolas")
+}
+
+model Aluno {
+  id             Int         @id @default(autoincrement())
+  numeroBI       String?     @unique @db.VarChar(20)
+  nome           String
+  apelido        String
+  dataNascimento DateTime
+  genero         Genero
+  escolaId       Int
+  status         StatusAluno @default(ATIVO)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  escola         Escola          @relation(fields: [escolaId], references: [id])
+  matriculas     Matricula[]
+  notas          Nota[]
+  frequencias    Frequencia[]
+  transferencias Transferencia[]
+
+  @@map("alunos")
+}
+
+model Professor {
+  id                Int              @id @default(autoincrement())
+  numeroFuncionario String           @unique @db.VarChar(20)
+  nome              String
+  apelido           String
+  genero            Genero
+  dataNascimento    DateTime
+  habilitacao       NivelHabilitacao
+  email             String?          @unique
+  telefone          String?
+  ativo             Boolean          @default(true)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  escolas     ProfessorEscola[]
+  disciplinas ProfessorDisciplina[]
+  turmas      Turma[]
+  notas       Nota[]
+  utilizador  Utilizador?
+
+  @@map("professores")
+}
+
+model ProfessorEscola {
+  id          Int      @id @default(autoincrement())
+  professorId Int
+  escolaId    Int
+  anoLetivo   Int
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  professor Professor @relation(fields: [professorId], references: [id])
+  escola    Escola    @relation(fields: [escolaId], references: [id])
+
+  @@unique([professorId, escolaId, anoLetivo])
+  @@map("professor_escola")
+}
+
+model Disciplina {
+  id     Int         @id @default(autoincrement())
+  nome   String      @unique
+  codigo String      @unique @db.VarChar(10)
+  nivel  NivelEnsino
+
+  professores ProfessorDisciplina[]
+  notas       Nota[]
+  turmas      TurmaDisciplina[]
+
+  @@map("disciplinas")
+}
+
+model ProfessorDisciplina {
+  id           Int @id @default(autoincrement())
+  professorId  Int
+  disciplinaId Int
+
+  professor  Professor  @relation(fields: [professorId], references: [id])
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id])
+
+  @@unique([professorId, disciplinaId])
+  @@map("professor_disciplina")
+}
+
+model Turma {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  classe      Int
+  turno       String
+  anoLetivo   Int
+  escolaId    Int
+  professorId Int?
+  capacidade  Int      @default(40)
+  createdAt   DateTime @default(now())
+
+  escola      Escola            @relation(fields: [escolaId], references: [id])
+  professor   Professor?        @relation(fields: [professorId], references: [id])
+  matriculas  Matricula[]
+  disciplinas TurmaDisciplina[]
+  frequencias Frequencia[]
+
+  @@map("turmas")
+}
+
+model TurmaDisciplina {
+  id           Int @id @default(autoincrement())
+  turmaId      Int
+  disciplinaId Int
+
+  turma      Turma      @relation(fields: [turmaId], references: [id])
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id])
+
+  @@unique([turmaId, disciplinaId])
+  @@map("turma_disciplina")
+}
+
+model Matricula {
+  id            Int             @id @default(autoincrement())
+  alunoId       Int
+  turmaId       Int
+  anoLetivo     Int
+  dataMatricula DateTime        @default(now())
+  status        StatusMatricula @default(ATIVA)
+  createdAt     DateTime        @default(now())
+
+  aluno Aluno @relation(fields: [alunoId], references: [id])
+  turma Turma @relation(fields: [turmaId], references: [id])
+
+  @@unique([alunoId, anoLetivo])
+  @@map("matriculas")
+}
+
+model Nota {
+  id           Int      @id @default(autoincrement())
+  alunoId      Int
+  disciplinaId Int
+  professorId  Int
+  anoLetivo    Int
+  trimestre    Int
+  valor        Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  aluno      Aluno      @relation(fields: [alunoId], references: [id])
+  disciplina Disciplina @relation(fields: [disciplinaId], references: [id])
+  professor  Professor  @relation(fields: [professorId], references: [id])
+
+  @@unique([alunoId, disciplinaId, anoLetivo, trimestre])
+  @@map("notas")
+}
+
+model Frequencia {
+  id          Int      @id @default(autoincrement())
+  alunoId     Int
+  turmaId     Int
+  data        DateTime @db.Date
+  presente    Boolean  @default(true)
+  justificada Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  aluno Aluno @relation(fields: [alunoId], references: [id])
+  turma Turma @relation(fields: [turmaId], references: [id])
+
+  @@unique([alunoId, turmaId, data])
+  @@map("frequencias")
+}
+
+model Transferencia {
+  id              Int      @id @default(autoincrement())
+  alunoId         Int
+  escolaOrigemId  Int
+  escolaDestinoId Int
+  data            DateTime @default(now())
+  motivo          String?
+  createdAt       DateTime @default(now())
+
+  aluno Aluno @relation(fields: [alunoId], references: [id])
+
+  @@map("transferencias")
+}
+
+model Utilizador {
+  id           Int            @id @default(autoincrement())
+  email        String         @unique
+  passwordHash String
+  role         RoleUtilizador
+  nome         String
+  ativo        Boolean        @default(true)
+  escolaId     Int?
+  provinciaId  Int?
+  professorId  Int?           @unique
+  ultimoLogin  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  escola        Escola?      @relation(fields: [escolaId], references: [id])
+  provincia     Provincia?   @relation(fields: [provinciaId], references: [id])
+  professor     Professor?   @relation(fields: [professorId], references: [id])
+  auditoria     Auditoria[]
+  refreshTokens RefreshToken[]
+
+  @@map("utilizadores")
+}
+
+model RefreshToken {
+  id           Int      @id @default(autoincrement())
+  token        String   @unique
+  utilizadorId Int
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  utilizador Utilizador @relation(fields: [utilizadorId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Auditoria {
+  id           Int      @id @default(autoincrement())
+  utilizadorId Int
+  acao         String
+  tabela       String
+  registoId    Int?
+  detalhes     Json?
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  utilizador Utilizador @relation(fields: [utilizadorId], references: [id])
+
+  @@map("auditoria")
+}
