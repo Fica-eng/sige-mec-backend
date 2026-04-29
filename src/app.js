@@ -46,6 +46,7 @@ v1.use('/turmas',       require('./routes/turmas'));
 v1.use('/notas',        require('./routes/notas'));
 v1.use('/matriculas',   require('./routes/matriculas'));
 v1.use('/estatisticas', require('./routes/estatisticas'));
+v1.use('/exportar',   require('./routes/exportar'));
 v1.use('/relatorios',   require('./routes/relatorios'));
 app.use('/api/v1', v1);
 
