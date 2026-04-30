@@ -43,6 +43,7 @@ app.use(morgan('combined', {
 // Rotas
 var v1 = express.Router();
 v1.use('/auth',          require('./routes/auth'));
+v1.use('/provincias',    require('./routes/provincias'));
 v1.use('/distritos',     require('./routes/distritos'));
 v1.use('/escolas',       require('./routes/escolas'));
 v1.use('/alunos',        require('./routes/alunos'));
