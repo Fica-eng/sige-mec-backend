@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 const PROVINCIAS_DISTRITOS = [
   {
     nome: 'Maputo Cidade', codigo: 'MC',
-    distritos: ['KaMpfumu','KaMaxakeni','KaMavota','KaMubukwana','KaNyaka','KaTembe']
+    distritos: ['KaMpfumu','KaMaxakeni','KaMavota','KaMubukwana','Nlhamankulu','KaNyaka','KaTembe']
   },
   {
     nome: 'Maputo Província', codigo: 'MP',
@@ -22,23 +22,23 @@ const PROVINCIAS_DISTRITOS = [
   },
   {
     nome: 'Sofala', codigo: 'SF',
-    distritos: ['Beira','Búzi','Chibabava','Chimanimani','Dondo','Gorongosa','Machanga','Maringué','Muanza','Nhamatanda']
+    distritos: ['Beira','Búzi','Caia','Chemba','Cheringoma','Chibabava','Marromeu','Dondo','Gorongosa','Machanga','Maringué','Muanza','Nhamatanda']
   },
   {
     nome: 'Manica', codigo: 'MN',
-    distritos: ['Báruè','Chimoio','Gondola','Guro','Machaze','Macossa','Mossurize','Sussundenga','Tambara','Vanduzi']
+    distritos: ['Báruè','Chimoio','Gondola','Guro','Macate','Manica','Machaze','Macossa','Mossurize','Sussundenga','Tambara','Vanduzi']
   },
   {
     nome: 'Tete', codigo: 'TE',
-    distritos: ['Angónia','Cahora-Bassa','Changara','Chifunde','Chiuta','Dôa','Macanga','Marávia','Moatize','Mutarara','Tete','Tsangano','Zumbo']
+    distritos: ['Angónia','Cahora-Bassa','Changara','Chifunde','Chiuta','Dôa','Macanga','Marávia','Magoé','Marara','Moatize','Mutarara','Tete','Tsangano','Zumbo']
   },
   {
     nome: 'Zambézia', codigo: 'ZB',
-    distritos: ['Alto Molócuè','Chinde','Gilé','Guruè','Ile','Inhassunge','Luabo','Lugela','Maganja da Costa','Milange','Mocuba','Mopeia','Morrumbala','Namacurra','Namarrói','Nicoadala','Pebane','Quelimane']
+    distritos: ['Alto Molócuè','Chinde','Gilé','Guruè','Ile','Inhassunge','Luabo','Lugela','Maganja da Costa','Milange','Mocuba','Mopeia','Morrumbala','Derre','Mulevala','Molumbo','Namacurra','Namarrói','Nicoadala','Pebane','Quelimane']
   },
   {
     nome: 'Nampula', codigo: 'NP',
-    distritos: ['Angoche','Eráti','Lalaua','Larde','Liúpo','Malema','Meconta','Mecubúri','Memba','Mogincual','Mogovolas','Moma','Monapo','Mossuril','Murrupula','Nacala','Nacala-a-Velha','Nacarôa','Nampula','Rapale','Ribáuè']
+    distritos: ['Angoche','Eráti','Ilha de Moçambique','Lalaua','Larde','Liúpo','Malema','Meconta','Mecubúri','Memba','Mogincual','Mogovolas','Moma','Monapo','Mossuril','Murrupula','Muecate','Nacala Porto','Nacala-a-Velha','Nacarôa','Nampula','Rapale','Ribáuè']
   },
   {
     nome: 'Niassa', codigo: 'NS',
