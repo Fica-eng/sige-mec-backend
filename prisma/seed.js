@@ -158,6 +158,7 @@ async function main() {
     { email:'coord.sul@mec.gov.mz',      passwordHash:hash('Coord@2024!'), role:'COORDENADOR_REGIONAL', nome:'Coordenador Sul',    provinciaId:mc.id },
     { email:'diretor.epc25@mec.gov.mz',  passwordHash:hash('Dir@2024!'),   role:'DIRETOR_ESCOLA',       nome:'Diretor EPC 25 Setembro',   escolaId:epc25.id    },
     { email:'diretor.josina@mec.gov.mz', passwordHash:hash('Dir@2024!'),   role:'DIRETOR_ESCOLA',       nome:'Diretor ES Josina Machel',  escolaId:esJosina.id },
+    { email:'professor@mec.gov.mz',       passwordHash:hash('Prof@2024!'),  role:'PROFESSOR',             nome:'Professor Demonstração',    escolaId:epc25.id    },
   ];
 
   for (var u of utilizadores) {
