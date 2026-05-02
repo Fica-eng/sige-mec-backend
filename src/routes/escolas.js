@@ -12,12 +12,26 @@ router.get('/', autenticar, async (req, res) => {
     else if (req.user.role === 'COORDENADOR_REGIONAL' && req.user.provinciaId) where.provinciaId = req.user.provinciaId;
     if (tipo) where.tipo = tipo;
     if (provinciaId) where.provinciaId = parseInt(provinciaId);
-    if (search) where.nome = { contains: search, mode: 'insensitive' };
+    if (search) where.OR = [
+      { nome:   { contains: search, mode: 'insensitive' } },
+      { codigo: { contains: search, mode: 'insensitive' } },
+    ];
     const [escolas, total] = await Promise.all([
       prisma.escola.findMany({ where, skip, take: parseInt(limit), include: { provincia: { select: { nome: true } }, distrito: { select: { nome: true } }, _count: { select: { alunos: true, professores: true } } }, orderBy: { nome: 'asc' } }),
       prisma.escola.count({ where })
     ]);
     res.json({ data: escolas, meta: { total, page: parseInt(page), limit: parseInt(limit), totalPages: Math.ceil(total / limit) } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/codigo/:codigo', autenticar, async (req, res) => {
+  try {
+    const escola = await prisma.escola.findUnique({
+      where: { codigo: req.params.codigo.toUpperCase() },
+      include: { provincia: { select: { nome: true } }, distrito: { select: { nome: true } }, _count: { select: { alunos: true, professores: true } } }
+    });
+    if (!escola) return res.status(404).json({ error: 'Escola não encontrada.' });
+    res.json(escola);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
